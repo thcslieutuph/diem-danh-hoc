@@ -3,72 +3,202 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Điểm danh học</title>
+  <title>Điểm danh Phân hiệu</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 16px; }
-    .nut-lop { font-size: 18px; padding: 10px 20px; margin: 4px; cursor: pointer; }
+    :root{--nen:#f5f5f2;--the:#fff;--chu:#1f1f1e;--phu:#6b6a66;--vien:#ddd;
+      --xanh:#185fa5;--xanh-nhat:#e6f1fb;--luc:#3b6d11;--luc-nhat:#eaf3de;
+      --vang:#854f0b;--vang-nhat:#faeeda;--do:#a32d2d;--do-nhat:#fcebeb;
+      --tim:#534ab7;--tim-nhat:#eeedfe}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--nen);color:var(--chu);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px}
+    .khung{max-width:420px;margin:16px auto;background:var(--the);border:1px solid var(--vien);
+      border-radius:16px;padding:20px}
+    h1{font-size:18px;font-weight:600;text-align:center;margin:0}
+    .phu{font-size:13px;color:var(--phu)}
+    label{display:block;font-size:13px;color:var(--phu);margin:12px 0 4px}
+    input{width:100%;height:42px;border:1px solid var(--vien);border-radius:8px;padding:0 12px;font-size:16px}
+    button{height:40px;border:1px solid var(--vien);background:var(--the);border-radius:8px;
+      padding:0 14px;font-size:15px;cursor:pointer;color:var(--chu)}
+    .chinh{width:100%;background:var(--xanh);color:#fff;border:none;margin-top:8px}
+    .loi{color:var(--do);font-size:13px;min-height:18px;margin:8px 0 0}
+    .chip{display:inline-block;font-size:12px;padding:3px 10px;border-radius:8px;margin:4px 4px 0 0}
+    .hop{margin:12px 0;padding:10px 12px;border-radius:8px;font-size:14px}
+    .nut-lop{margin:4px 6px 4px 0;min-width:60px}
+    .nut-lop.chon{border:2px solid var(--xanh)}
+    .an{display:none}
+    ol{padding-left:24px;line-height:1.7}
   </style>
 </head>
 <body>
-  <h1>Xin chào Phân hiệu!</h1>
-  <p id="trang-thai">Đang tải danh sách lớp...</p>
-  <div id="ds-lop"></div>
 
-  <h2 id="tieu-de-lop"></h2>
-  <ol id="ds-hoc-sinh"></ol>
+  <div class="khung" id="man-dang-nhap">
+    <h1>Điểm danh Phân hiệu</h1>
+    <p class="phu" style="text-align:center;margin:4px 0 8px">Trường THCS Liêu Tú</p>
+    <label for="ten">Tên đăng nhập</label>
+    <input id="ten" autocomplete="username" autocapitalize="none" placeholder="gv03">
+    <label for="mk">Mật khẩu</label>
+    <input id="mk" type="password" autocomplete="current-password">
+    <p class="loi" id="loi-dn"></p>
+    <button class="chinh" id="nut-dn">Đăng nhập</button>
+  </div>
+
+  <div class="khung an" id="man-chinh">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <div><div id="ten-gv" style="font-weight:600"></div><div id="vai"></div></div>
+      <button id="nut-dx">Đăng xuất</button>
+    </div>
+    <div class="hop" id="hom-nay"></div>
+    <button id="nut-mo-mk" style="font-size:13px;height:34px">Đổi mật khẩu</button>
+    <div id="khung-mk" class="an" style="margin-top:8px">
+      <p class="phu" id="ghi-chu-mk"></p>
+      <label for="mk1">Mật khẩu mới (ít nhất 8 ký tự)</label>
+      <input id="mk1" type="password" autocomplete="new-password">
+      <label for="mk2">Nhập lại mật khẩu mới</label>
+      <input id="mk2" type="password" autocomplete="new-password">
+      <p class="loi" id="loi-mk"></p>
+      <button class="chinh" id="nut-luu-mk">Lưu mật khẩu mới</button>
+    </div>
+    <p class="phu" style="margin:16px 0 4px">Danh sách học sinh bạn được xem</p>
+    <div id="ds-lop"></div>
+    <div id="td-lop" style="font-weight:600;margin-top:12px"></div>
+    <ol id="ds-hs"></ol>
+  </div>
 
   <script>
-    // 1. Địa chỉ dự án và thẻ khách
     const SUPABASE_URL = "https://lgvqdlqkoekhppppnpga.supabase.co";
     const SUPABASE_KEY = "sb_publishable_ZmgM7v7l0pVH8jl9FCZb6w_WSw9JIb1";
+    const MIEN = "@diemdanh.test";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const $ = id => document.getElementById(id);
+    let gv = null;
 
-    // 2. Tải danh sách lớp, mỗi lớp thành một nút bấm
-    async function taiLop() {
-      const tt = document.getElementById("trang-thai");
-      const { data, error } = await sb.from("lop").select("id, ten, khoi").order("ten");
-      if (error) {
-        tt.textContent = "Lỗi: " + error.message;
-        return;
-      }
-      tt.textContent = "Chọn một lớp:";
-      const khung = document.getElementById("ds-lop");
-      data.forEach(function (lop) {
-        const nut = document.createElement("button");
-        nut.className = "nut-lop";
-        nut.textContent = lop.ten;
-        nut.onclick = function () { taiHocSinh(lop); };
-        khung.appendChild(nut);
-      });
+    function homNay() { return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }); }
+    function thuCua(ngay) { const d = new Date(ngay + "T00:00:00Z").getUTCDay(); return d === 0 ? 8 : d + 1; }
+    function tenThu(t) { return t === 8 ? "Chủ nhật" : "thứ " + ["", "", "Hai", "Ba", "Tư", "Năm", "Sáu", "Bảy"][t]; }
+    function tenBuoi(b) { return b === "sang" ? "sáng" : "chiều"; }
+
+    function chip(chu, mau) {
+      const s = document.createElement("span");
+      s.className = "chip"; s.textContent = chu;
+      s.style.background = "var(--" + mau + "-nhat)"; s.style.color = "var(--" + mau + ")";
+      $("vai").appendChild(s);
+    }
+    function hop(chu, mau) {
+      const h = $("hom-nay"); h.textContent = chu;
+      h.style.background = "var(--" + mau + "-nhat)"; h.style.color = "var(--" + mau + ")";
+    }
+    function hienDangNhap() {
+      $("man-chinh").classList.add("an"); $("khung-mk").classList.add("an");
+      $("man-dang-nhap").classList.remove("an");
     }
 
-    // 3. Bấm lớp nào thì tải học sinh của lớp đó
-    async function taiHocSinh(lop) {
-      const td = document.getElementById("tieu-de-lop");
-      const ol = document.getElementById("ds-hoc-sinh");
-      td.textContent = "Đang tải lớp " + lop.ten + "...";
-      ol.innerHTML = "";
-
-      const { data, error } = await sb
-        .from("hoc_sinh")
-        .select("id, ho_ten")
-        .eq("lop_id", lop.id)
-        .order("ho_ten");
-
+    // ĐĂNG NHẬP
+    $("nut-dn").onclick = async () => {
+      const ten = $("ten").value.trim().toLowerCase(), mk = $("mk").value;
+      $("loi-dn").textContent = "";
+      if (!ten || !mk) { $("loi-dn").textContent = "Nhập tên đăng nhập và mật khẩu"; return; }
+      const email = ten.includes("@") ? ten : ten + MIEN;
+      $("nut-dn").disabled = true; $("nut-dn").textContent = "Đang đăng nhập...";
+      const { error } = await sb.auth.signInWithPassword({ email, password: mk });
+      $("nut-dn").disabled = false; $("nut-dn").textContent = "Đăng nhập";
       if (error) {
-        td.textContent = "Lỗi: " + error.message;
+        $("loi-dn").textContent = error.code === "invalid_credentials"
+          ? "Sai tên đăng nhập hoặc mật khẩu"
+          : "Chưa đăng nhập được. Kiểm tra mạng rồi thử lại.";
         return;
       }
-      td.textContent = "Lớp " + lop.ten + " – " + data.length + " học sinh";
-      data.forEach(function (hs) {
-        const li = document.createElement("li");
-        li.textContent = hs.ho_ten;
-        ol.appendChild(li);
-      });
+      $("mk").value = "";
+      await vaoApp();
+    };
+    $("mk").addEventListener("keydown", e => { if (e.key === "Enter") $("nut-dn").click(); });
+
+    // SAU KHI ĐĂNG NHẬP
+    async function vaoApp() {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { hienDangNhap(); return; }
+
+      const { data, error } = await sb.from("giao_vien")
+        .select("id, ho_ten, vai_tro, lop_chu_nhiem_id").eq("user_id", user.id).maybeSingle();
+      if (error || !data) {
+        await sb.auth.signOut(); hienDangNhap();
+        $("loi-dn").textContent = "Tài khoản chưa được cấp quyền. Liên hệ Quản trị.";
+        return;
+      }
+      gv = data;
+      $("man-dang-nhap").classList.add("an"); $("man-chinh").classList.remove("an");
+      $("ten-gv").textContent = gv.ho_ten; $("vai").innerHTML = "";
+
+      const { data: dsLop } = await sb.from("lop").select("id, ten").order("ten");
+      const lopCN = (dsLop || []).find(l => l.id === gv.lop_chu_nhiem_id);
+      const nay = homNay(), thu = thuCua(nay), ngayVN = nay.slice(8, 10) + "/" + nay.slice(5, 7);
+      const { data: pc } = await sb.from("phan_cong_truc").select("thu, buoi")
+        .eq("giao_vien_id", gv.id).lte("tu_ngay", nay).gte("den_ngay", nay).order("thu");
+
+      if (gv.vai_tro === "quan_tri") chip("Quản trị", "do");
+      if (gv.vai_tro === "hieu_truong") chip("Hiệu trưởng · chỉ xem", "tim");
+      if (gv.vai_tro === "pho_hieu_truong") chip("Phó Hiệu trưởng · chỉ xem", "tim");
+      if (lopCN) chip("GVCN " + lopCN.ten, "xanh");
+      if (pc && pc.length) chip("Giáo viên trực", "luc");
+
+      if (gv.vai_tro === "quan_tri") hop("Bạn có toàn quyền", "do");
+      else if (gv.vai_tro !== "giao_vien") hop("Bạn xem được toàn bộ, không sửa dữ liệu", "tim");
+      else if (pc && pc.length) {
+        const truc = pc.filter(p => p.thu === thu);
+        if (truc.length) hop("Hôm nay " + tenThu(thu) + " " + ngayVN + " · bạn trực buổi "
+          + truc.map(p => tenBuoi(p.buoi)).join(" và "), "luc");
+        else hop("Hôm nay bạn không có buổi trực. Lịch của bạn: "
+          + pc.map(p => tenBuoi(p.buoi) + " " + tenThu(p.thu)).join(", "), "vang");
+      } else hop("Bạn không có lịch trực trong đợt này", "vang");
+
+      veLop(dsLop || []);
+      if (!user.user_metadata || !user.user_metadata.da_doi_mk)
+        moDoiMk("Lần đầu đăng nhập: hãy đổi mật khẩu do Quản trị cấp.");
     }
 
-    taiLop();
+    // DANH SÁCH LỚP VÀ HỌC SINH
+    function veLop(ds) {
+      const k = $("ds-lop"); k.innerHTML = ""; $("td-lop").textContent = ""; $("ds-hs").innerHTML = "";
+      ds.forEach(l => {
+        const b = document.createElement("button");
+        b.className = "nut-lop"; b.textContent = l.ten;
+        b.onclick = () => {
+          document.querySelectorAll(".nut-lop").forEach(x => x.classList.remove("chon"));
+          b.classList.add("chon"); taiHocSinh(l);
+        };
+        k.appendChild(b);
+      });
+    }
+    async function taiHocSinh(l) {
+      $("td-lop").textContent = "Đang tải lớp " + l.ten + "..."; $("ds-hs").innerHTML = "";
+      const { data, error } = await sb.from("hoc_sinh").select("ho_ten")
+        .eq("lop_id", l.id).eq("dang_hoc", true).order("ho_ten");
+      if (error) { $("td-lop").textContent = "Không tải được. Thử lại sau."; return; }
+      if (!data.length) { $("td-lop").textContent = "Lớp " + l.ten + ": bạn không được xem danh sách lớp này"; return; }
+      $("td-lop").textContent = "Lớp " + l.ten + " – " + data.length + " học sinh";
+      data.forEach(h => { const li = document.createElement("li"); li.textContent = h.ho_ten; $("ds-hs").appendChild(li); });
+    }
+
+    // ĐỔI MẬT KHẨU
+    function moDoiMk(ghiChu) { $("khung-mk").classList.remove("an"); $("ghi-chu-mk").textContent = ghiChu || ""; }
+    $("nut-mo-mk").onclick = () => { $("khung-mk").classList.toggle("an"); $("ghi-chu-mk").textContent = ""; };
+    $("nut-luu-mk").onclick = async () => {
+      const a = $("mk1").value, b = $("mk2").value, loi = $("loi-mk");
+      loi.style.color = ""; loi.textContent = "";
+      if (a.length < 8) { loi.textContent = "Mật khẩu mới cần ít nhất 8 ký tự"; return; }
+      if (a !== b) { loi.textContent = "Hai lần nhập không khớp"; return; }
+      const { error } = await sb.auth.updateUser({ password: a, data: { da_doi_mk: true } });
+      if (error) { loi.textContent = "Chưa đổi được: " + error.message; return; }
+      $("mk1").value = ""; $("mk2").value = "";
+      loi.style.color = "var(--luc)"; loi.textContent = "Đã đổi mật khẩu";
+      setTimeout(() => { $("khung-mk").classList.add("an"); loi.textContent = ""; loi.style.color = ""; }, 1500);
+    };
+
+    // ĐĂNG XUẤT
+    $("nut-dx").onclick = async () => { await sb.auth.signOut(); gv = null; hienDangNhap(); };
+
+    vaoApp();
   </script>
 </body>
 </html>
