@@ -1,26 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Điểm danh – bản học</title>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #f5f7fa; }
-    .the { background: #fff; border-radius: 12px; padding: 20px; max-width: 480px; margin: auto;
-           box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    h1 { font-size: 20px; color: #1a56db; margin-top: 0; }
-  </style>
+  <title>Điểm danh học</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="the">
-    <h1>Xin chào Phân hiệu!</h1>
-    <p>Đây là bản học app điểm danh, chạy trên GitHub Pages.</p>
-    <p>Trường THCS Liêu Tú – Phân hiệu</p>
-    <p id="gio"></p>
-  </div>
+  <h1>Xin chào Phân hiệu!</h1>
+  <p id="trang-thai">Đang tải danh sách lớp...</p>
+  <ul id="ds-lop"></ul>
+
   <script>
-    document.getElementById('gio').textContent =
-      'Trang mở lúc: ' + new Date().toLocaleString('vi-VN');
+    // 1. Địa chỉ dự án và thẻ khách
+    const SUPABASE_URL = "https://lgvqdlqkoekhppppnpga.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_ZmgM7v7l0pVH8jl9FCZb6w_WSw9JIb1";
+
+    // 2. Tạo "người đưa thư" kết nối tới Supabase
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 3. Hỏi bảng lop và hiện kết quả
+    async function taiLop() {
+      const tt = document.getElementById("trang-thai");
+      const { data, error } = await sb.from("lop").select("id, ten, khoi").order("ten");
+
+      if (error) {
+        tt.textContent = "Lỗi: " + error.message;
+        return;
+      }
+      tt.textContent = "Nhận được " + data.length + " lớp.";
+      const ul = document.getElementById("ds-lop");
+      data.forEach(function (l) {
+        const li = document.createElement("li");
+        li.textContent = l.ten + " (khối " + l.khoi + ")";
+        ul.appendChild(li);
+      });
+    }
+    taiLop();
   </script>
 </body>
 </html>
