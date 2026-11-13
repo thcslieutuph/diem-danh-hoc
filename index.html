@@ -5,37 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Điểm danh học</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .nut-lop { font-size: 18px; padding: 10px 20px; margin: 4px; cursor: pointer; }
+  </style>
 </head>
 <body>
   <h1>Xin chào Phân hiệu!</h1>
   <p id="trang-thai">Đang tải danh sách lớp...</p>
-  <ul id="ds-lop"></ul>
+  <div id="ds-lop"></div>
+
+  <h2 id="tieu-de-lop"></h2>
+  <ol id="ds-hoc-sinh"></ol>
 
   <script>
     // 1. Địa chỉ dự án và thẻ khách
     const SUPABASE_URL = "https://lgvqdlqkoekhppppnpga.supabase.co";
     const SUPABASE_KEY = "sb_publishable_ZmgM7v7l0pVH8jl9FCZb6w_WSw9JIb1";
-
-    // 2. Tạo "người đưa thư" kết nối tới Supabase
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 3. Hỏi bảng lop và hiện kết quả
+    // 2. Tải danh sách lớp, mỗi lớp thành một nút bấm
     async function taiLop() {
       const tt = document.getElementById("trang-thai");
       const { data, error } = await sb.from("lop").select("id, ten, khoi").order("ten");
-
       if (error) {
         tt.textContent = "Lỗi: " + error.message;
         return;
       }
-      tt.textContent = "Nhận được " + data.length + " lớp.";
-      const ul = document.getElementById("ds-lop");
-      data.forEach(function (l) {
-        const li = document.createElement("li");
-        li.textContent = l.ten + " (khối " + l.khoi + ")";
-        ul.appendChild(li);
+      tt.textContent = "Chọn một lớp:";
+      const khung = document.getElementById("ds-lop");
+      data.forEach(function (lop) {
+        const nut = document.createElement("button");
+        nut.className = "nut-lop";
+        nut.textContent = lop.ten;
+        nut.onclick = function () { taiHocSinh(lop); };
+        khung.appendChild(nut);
       });
     }
+
+    // 3. Bấm lớp nào thì tải học sinh của lớp đó
+    async function taiHocSinh(lop) {
+      const td = document.getElementById("tieu-de-lop");
+      const ol = document.getElementById("ds-hoc-sinh");
+      td.textContent = "Đang tải lớp " + lop.ten + "...";
+      ol.innerHTML = "";
+
+      const { data, error } = await sb
+        .from("hoc_sinh")
+        .select("id, ho_ten")
+        .eq("lop_id", lop.id)
+        .order("ho_ten");
+
+      if (error) {
+        td.textContent = "Lỗi: " + error.message;
+        return;
+      }
+      td.textContent = "Lớp " + lop.ten + " – " + data.length + " học sinh";
+      data.forEach(function (hs) {
+        const li = document.createElement("li");
+        li.textContent = hs.ho_ten;
+        ol.appendChild(li);
+      });
+    }
+
     taiLop();
   </script>
 </body>
