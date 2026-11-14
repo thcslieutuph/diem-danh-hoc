@@ -252,7 +252,8 @@ $("nutDn").onclick = async () => {
 $("mk").addEventListener("keydown", e => { if (e.key === "Enter") $("nutDn").click(); });
 
 async function vaoApp() {
-  const { data: { user } } = await sb.auth.getUser();
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session && session.user;
   if (!user) { man("mDangNhap"); return; }
   const { data: gv, error } = await sb.from("giao_vien")
     .select("id, ho_ten, vai_tro, lop_chu_nhiem_id, la_tpt, du_phong").eq("user_id", user.id).maybeSingle();
@@ -432,4 +433,97 @@ async function moLop(l) {
     text: "Đã chốt " + (S.daChot.lan_chot > 1 ? "lần " + S.daChot.lan_chot + " " : "") + "lúc " + gioLuc(S.daChot.luc) +
           (S.gvTen[S.daChot.nguoi_chot] ? " · " + S.gvTen[S.daChot.nguoi_chot] : "") }));
   const baoTruoc = Object.values(S.tt).filter(x => x.gvcn).length;
-  if (baoTruoc) $("hopLop").append(el("div", { class:
+  if (baoTruoc) $("hopLop").append(el("div", { class: "hop", text: "GVCN đã báo phép trước cho " + baoTruoc + " em, app đã điền sẵn Vắng P." }));
+  veLop();
+}
+
+function demLop() {
+  let p = 0, kp = 0;
+  S.hs.forEach(h => { const s = S.tt[h.id]; if (s && s.t === "P") p++; if (s && s.t === "KP") kp++; });
+  return { si: S.hs.length, p, kp };
+}
+function veLop() {
+  $("dsHs").replaceChildren(...S.hs.map((h, i) => {
+    const s = S.tt[h.id], t = s ? s.t : "cm";
+    const trai = el("div", { style: "flex:1;min-width:0" }, el("div", { text: h.ho_ten }));
+    if (s && s.gvcn) trai.append(el("div", { style: "font-size:12px;color:var(--cam)", text: "GVCN đã báo phép" }));
+    if (s) {
+      const ip = el("input", { class: "ld", placeholder: "Lý do (không bắt buộc)", maxlength: "300" });
+      ip.value = s.ld || ""; ip.oninput = () => { s.ld = ip.value; };
+      trai.append(ip);
+    }
+    return el("div", { class: "hs " + (t === "cm" ? "" : t) },
+      el("span", { class: "stt", text: i + 1 }), trai,
+      el("button", { class: "pill " + t, text: t === "cm" ? "Có mặt" : t === "P" ? "Vắng P" : "Vắng KP", onclick: () => doi(h.id) }));
+  }));
+  const d = demLop();
+  $("tongLop").replaceChildren(
+    "Sĩ số ", el("b", { text: d.si }), " · Có mặt ", el("b", { text: d.si - d.p - d.kp }), el("br"),
+    "Vắng P ", el("b", { text: d.p }), " · Vắng KP ", el("b", { text: d.kp }));
+  $("nutChot").textContent = S.daChot ? "Chốt lại" : "Chốt";
+}
+function doi(id) {
+  const s = S.tt[id];
+  if (!s) S.tt[id] = { t: "P", ld: "" };
+  else if (s.t === "P") { s.t = "KP"; s.gvcn = false; }
+  else delete S.tt[id];
+  veLop();
+}
+$("nutCaLop").onclick = () => { S.tt = {}; veLop(); };
+$("nutVe").onclick = () => { S.lopMo = null; man("mChinh"); veChinh(); };
+
+$("nutChot").onclick = async () => {
+  const l = S.lopMo; if (!l) return;
+  if (S.bd && S.ngay < S.bd) { toast("Buổi này trước ngày áp dụng app, chỉ xem."); return; }
+  const cd = chuaDen(S.ngay, S.buoi); if (cd) { toast(cd); return; }
+  if (!duocChot(l.diem_truong_id)) { toast("Thầy/cô không được phân công trực buổi này."); return; }
+  const vang = S.hs.filter(h => S.tt[h.id]).map(h => ({ hs: h.id, loai: S.tt[h.id].t, ly_do: (S.tt[h.id].ld || "").trim() }));
+  const d = demLop();
+  const nut = $("nutChot"); nut.disabled = true; nut.textContent = "Đang lưu...";
+  const { data, error } = await sb.rpc("chot_lop", { p_lop: l.id, p_ngay: S.ngay, p_buoi: S.buoi, p_vang: vang });
+  nut.disabled = false; nut.textContent = S.daChot ? "Chốt lại" : "Chốt";
+  if (error) { toast("Chưa chốt được: " + error.message); return; }
+  // Kiểm tra máy chủ đã ghi đúng như trên màn hình
+  if (!data || data.si_so !== d.si || data.so_p !== d.p || data.so_kp !== d.kp) {
+    $("hopLop").replaceChildren(el("div", { class: "hop",
+      text: "Máy chủ ghi nhận khác màn hình (P " + (data ? data.so_p : "?") + ", KP " + (data ? data.so_kp : "?") + "). Mở lại lớp để kiểm tra." }));
+    return;
+  }
+  toast("Đã chốt lớp " + l.ten + ": có mặt " + data.co_mat + "/" + data.si_so);
+  S.lopMo = null; man("mChinh"); veChinh();
+};
+
+/* ---------- Ngày, buổi ---------- */
+$("lui").onclick = () => { S.ngay = cong(S.ngay, -1); veChinh(); };
+$("toi").onclick = () => { S.ngay = cong(S.ngay, 1); veChinh(); };
+document.querySelectorAll(".seg button").forEach(b => { b.onclick = () => { S.buoi = b.dataset.b; veChinh(); }; });
+
+/* ---------- Mật khẩu, thoát ---------- */
+function moMk(ghiChu) { $("khungMk").classList.remove("an"); $("ghiChuMk").textContent = ghiChu || ""; $("loiMk").textContent = ""; window.scrollTo(0, 0); }
+$("nutMoMk").onclick = () => moMk("");
+$("nutDongMk").onclick = () => $("khungMk").classList.add("an");
+$("nutLuuMk").onclick = async () => {
+  const a = $("mk1").value, b = $("mk2").value, loi = $("loiMk");
+  loi.textContent = "";
+  if (a.length < 8 || !/[a-zA-Z]/.test(a) || !/[0-9]/.test(a)) { loi.textContent = "Mật khẩu cần ít nhất 8 ký tự, có cả chữ và số"; return; }
+  if (a !== b) { loi.textContent = "Hai lần nhập không khớp"; return; }
+  const { error } = await sb.auth.updateUser({ password: a, data: { da_doi_mk: true } });
+  if (error) { loi.textContent = "Chưa đổi được: " + error.message; return; }
+  $("mk1").value = ""; $("mk2").value = "";
+  $("khungMk").classList.add("an"); toast("Đã đổi mật khẩu");
+};
+$("nutThoat").onclick = async () => { await sb.auth.signOut(); S.gv = null; S.tok++; man("mDangNhap"); };
+
+function baoLoi(t) { man("mDangNhap"); $("loiDn").textContent = t; }
+window.addEventListener("error", e => baoLoi("Lỗi: " + e.message));
+window.addEventListener("unhandledrejection", e => baoLoi("Lỗi: " + ((e.reason && e.reason.message) || e.reason)));
+(async () => {
+  man("mDangNhap"); $("loiDn").textContent = "Đang kiểm tra phiên đăng nhập...";
+  const hetGio = new Promise((_, r) => setTimeout(() => r(new Error("máy chủ không phản hồi sau 10 giây")), 10000));
+  try { await Promise.race([vaoApp(), hetGio]); }
+  catch (e) { baoLoi("Chưa vào được: " + e.message + ". Thầy/cô đăng nhập lại."); return; }
+  if ($("loiDn").textContent === "Đang kiểm tra phiên đăng nhập...") $("loiDn").textContent = "";
+})();
+</script>
+</body>
+</html>
