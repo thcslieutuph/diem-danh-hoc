@@ -1,204 +1,435 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Điểm danh Phân hiệu</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root{--nen:#f5f5f2;--the:#fff;--chu:#1f1f1e;--phu:#6b6a66;--vien:#ddd;
-      --xanh:#185fa5;--xanh-nhat:#e6f1fb;--luc:#3b6d11;--luc-nhat:#eaf3de;
-      --vang:#854f0b;--vang-nhat:#faeeda;--do:#a32d2d;--do-nhat:#fcebeb;
-      --tim:#534ab7;--tim-nhat:#eeedfe}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--nen);color:var(--chu);
-      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px}
-    .khung{max-width:420px;margin:16px auto;background:var(--the);border:1px solid var(--vien);
-      border-radius:16px;padding:20px}
-    h1{font-size:18px;font-weight:600;text-align:center;margin:0}
-    .phu{font-size:13px;color:var(--phu)}
-    label{display:block;font-size:13px;color:var(--phu);margin:12px 0 4px}
-    input{width:100%;height:42px;border:1px solid var(--vien);border-radius:8px;padding:0 12px;font-size:16px}
-    button{height:40px;border:1px solid var(--vien);background:var(--the);border-radius:8px;
-      padding:0 14px;font-size:15px;cursor:pointer;color:var(--chu)}
-    .chinh{width:100%;background:var(--xanh);color:#fff;border:none;margin-top:8px}
-    .loi{color:var(--do);font-size:13px;min-height:18px;margin:8px 0 0}
-    .chip{display:inline-block;font-size:12px;padding:3px 10px;border-radius:8px;margin:4px 4px 0 0}
-    .hop{margin:12px 0;padding:10px 12px;border-radius:8px;font-size:14px}
-    .nut-lop{margin:4px 6px 4px 0;min-width:60px}
-    .nut-lop.chon{border:2px solid var(--xanh)}
-    .an{display:none}
-    ol{padding-left:24px;line-height:1.7}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Điểm danh học sinh</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#15305a;--navy2:#2b4877;--nen:#f1f3f7;--chu:#17233b;--phu:#5c6a85;--vien:#e1e5ec;
+  --xanh:#2463c9;--luc:#1b7a3d;--luc-nhat:#e3f3e8;--cam:#b5600c;--cam-nhat:#fbecd6;--do:#b42323;--do-nhat:#fde5e5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nen);color:var(--chu);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px}
+.app{max-width:480px;margin:0 auto;min-height:100vh}
+.top{background:var(--navy);color:#fff;padding:14px 14px 12px}
+.nho{font-size:11px;letter-spacing:.06em;color:#b6c3dc;text-transform:uppercase}
+.tb{border:1px solid #6d82a6;background:transparent;color:#fff;border-radius:10px;height:34px;padding:0 12px;font-size:13px;cursor:pointer}
+.seg{display:flex;background:var(--navy2);border-radius:10px;padding:3px}
+.seg button{border:none;background:transparent;color:#c9d4e8;height:30px;padding:0 14px;border-radius:8px;font-size:14px;cursor:pointer}
+.seg button.on{background:#fff;color:var(--navy)}
+.ngaybox{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--navy2);border-radius:10px;height:36px;padding:0 2px;min-width:0}
+.ngaybox button{border:none;background:transparent;color:#fff;font-size:22px;width:34px;height:34px;cursor:pointer}
+.ngaybox span{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.than{padding:10px 12px 40px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{border:1px solid #d6dbe4;background:#fff;color:#4a5670;border-radius:999px;padding:6px 14px;font-size:13px;white-space:nowrap;cursor:pointer}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.nh{font-size:11px;letter-spacing:.06em;color:var(--phu);margin:16px 2px 6px;text-transform:uppercase}
+.card{background:#fff;border:1px solid var(--vien);border-radius:14px;overflow:hidden}
+.dong{padding:10px 12px;border-bottom:1px solid #edf0f4;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+.dong:last-child{border-bottom:none}
+.dong.dang{background:#e7f5ec}
+.nhan{border-radius:999px;padding:3px 10px;font-size:12px;background:#eef1f5;color:var(--phu);white-space:nowrap}
+.luoi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.o{border-radius:12px;padding:12px 4px;text-align:center;border:1px solid var(--vien);background:#fff;cursor:pointer}
+.o.xong{background:#e7f5ec;border-color:#b9e0c6}
+.o b{display:block;font-size:20px;font-weight:600}
+.o span{font-size:13px;color:var(--phu)}
+.o.xong span{color:var(--luc)}
+.hop{margin-top:10px;padding:10px 12px;border-radius:12px;font-size:13px;background:#fff6e5;border:1px solid #f1d9a8;color:#8a5a08}
+.hop.tin{background:#eef3fb;border-color:#cfdcf1;color:#24427a}
+.hs{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #edf0f4}
+.hs:last-child{border-bottom:none}
+.hs.P{background:#fff8ee}.hs.KP{background:#fff3f3}
+.stt{width:22px;color:#8a94a8;font-size:13px;flex:none}
+.pill{min-width:90px;border:none;border-radius:999px;padding:8px 10px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+.pill.cm{background:var(--luc-nhat);color:var(--luc)}
+.pill.P{background:var(--cam-nhat);color:var(--cam)}
+.pill.KP{background:var(--do-nhat);color:var(--do)}
+.ld{width:100%;margin-top:6px;height:36px;border:1px solid #dfe3ea;border-radius:9px;padding:0 10px;font-size:14px}
+.chan{position:sticky;bottom:0;display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid var(--vien);padding:10px 14px}
+.nut-chinh{background:var(--xanh);color:#fff;border:none;border-radius:12px;height:46px;padding:0 26px;font-size:16px;cursor:pointer}
+.nut-chinh:disabled{opacity:.6}
+.nut{border:1px solid var(--vien);background:#eef3fb;color:#24427a;border-radius:10px;min-height:40px;padding:0 12px;font-size:14px;cursor:pointer;flex:1}
+.nut.dong-y{background:var(--luc);color:#fff;border-color:var(--luc)}
+label{display:block;font-size:13px;color:var(--phu);margin:12px 0 4px}
+.o-nhap{width:100%;height:46px;border:1px solid #dfe3ea;border-radius:12px;padding:0 14px;font-size:16px}
+.loi{color:var(--do);font-size:13px;min-height:18px;margin:8px 0 0}
+.dn{border:1px solid #f1d9a8;border-radius:14px;background:#fff;padding:12px;margin-bottom:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#17233b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90%;z-index:9;display:none}
+.an{display:none!important}
+</style>
 </head>
 <body>
+<div class="app">
 
-  <div class="khung" id="man-dang-nhap">
-    <h1>Điểm danh Phân hiệu</h1>
-    <p class="phu" style="text-align:center;margin:4px 0 8px">Trường THCS Liêu Tú</p>
-    <label for="ten">Tên đăng nhập</label>
-    <input id="ten" autocomplete="username" autocapitalize="none" placeholder="gv03">
-    <label for="mk">Mật khẩu</label>
-    <input id="mk" type="password" autocomplete="current-password">
-    <p class="loi" id="loi-dn"></p>
-    <button class="chinh" id="nut-dn">Đăng nhập</button>
+  <!-- ĐĂNG NHẬP -->
+  <div id="mDangNhap" class="an">
+    <div class="top" style="padding:40px 20px 70px">
+      <div class="nho">Trường THCS Liêu Tú</div>
+      <div style="font-size:26px;font-weight:700;margin-top:6px">Điểm danh học sinh</div>
+    </div>
+    <div class="card" style="margin:-50px 14px 0;padding:16px">
+      <label for="ten">Tên đăng nhập</label>
+      <input class="o-nhap" id="ten" autocomplete="username" autocapitalize="none" placeholder="gv03">
+      <label for="mk">Mật khẩu</label>
+      <input class="o-nhap" id="mk" type="password" autocomplete="current-password">
+      <p class="loi" id="loiDn"></p>
+      <button class="nut-chinh" style="width:100%" id="nutDn">Đăng nhập</button>
+    </div>
   </div>
 
-  <div class="khung an" id="man-chinh">
-    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
-      <div><div id="ten-gv" style="font-weight:600"></div><div id="vai"></div></div>
-      <button id="nut-dx">Đăng xuất</button>
+  <!-- MÀN HÌNH CHÍNH -->
+  <div id="mChinh" class="an">
+    <div class="top">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="min-width:0">
+          <div class="nho" id="vaiTro"></div>
+          <div style="font-size:19px;font-weight:600" id="tenGv"></div>
+        </div>
+        <div style="display:flex;gap:6px;flex:none">
+          <button class="tb" id="nutMoMk">Mật khẩu</button>
+          <button class="tb" id="nutThoat">Thoát</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <div class="ngaybox">
+          <button id="lui" aria-label="Ngày trước">‹</button>
+          <span id="nhanNgay"></span>
+          <button id="toi" aria-label="Ngày sau">›</button>
+        </div>
+        <div class="seg"><button data-b="sang">Sáng</button><button data-b="chieu">Chiều</button></div>
+      </div>
     </div>
-    <div class="hop" id="hom-nay"></div>
-    <button id="nut-mo-mk" style="font-size:13px;height:34px">Đổi mật khẩu</button>
-    <div id="khung-mk" class="an" style="margin-top:8px">
-      <p class="phu" id="ghi-chu-mk"></p>
-      <label for="mk1">Mật khẩu mới (ít nhất 8 ký tự)</label>
-      <input id="mk1" type="password" autocomplete="new-password">
-      <label for="mk2">Nhập lại mật khẩu mới</label>
-      <input id="mk2" type="password" autocomplete="new-password">
-      <p class="loi" id="loi-mk"></p>
-      <button class="chinh" id="nut-luu-mk">Lưu mật khẩu mới</button>
+    <div class="than">
+      <div id="khungMk" class="card an" style="padding:12px;margin-bottom:10px">
+        <div style="font-weight:600">Đổi mật khẩu</div>
+        <p style="font-size:13px;color:var(--phu);margin:4px 0 0" id="ghiChuMk"></p>
+        <label for="mk1">Mật khẩu mới (ít nhất 8 ký tự, có chữ và số)</label>
+        <input class="o-nhap" id="mk1" type="password" autocomplete="new-password">
+        <label for="mk2">Nhập lại mật khẩu mới</label>
+        <input class="o-nhap" id="mk2" type="password" autocomplete="new-password">
+        <p class="loi" id="loiMk"></p>
+        <div style="display:flex;gap:8px">
+          <button class="nut" id="nutDongMk">Để sau</button>
+          <button class="nut-chinh" style="flex:2" id="nutLuuMk">Lưu mật khẩu mới</button>
+        </div>
+      </div>
+
+      <div class="chips" id="chips"></div>
+
+      <div id="khuLich" class="an">
+        <div class="nh">Lịch trực của thầy/cô</div>
+        <div class="card" id="dsLich"></div>
+      </div>
+
+      <div id="khuDeNghi"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 8px;gap:8px">
+        <div>
+          <div style="font-size:17px;font-weight:600" id="tenDiem"></div>
+          <div style="font-size:12px;color:var(--phu)" id="nguoiTruc"></div>
+        </div>
+        <div style="font-size:12px;color:var(--phu);white-space:nowrap" id="demLop"></div>
+      </div>
+      <div id="hopBuoi"></div>
+      <div class="luoi" id="luoi" style="margin-top:10px"></div>
     </div>
-    <p class="phu" style="margin:16px 0 4px">Danh sách học sinh bạn được xem</p>
-    <div id="ds-lop"></div>
-    <div id="td-lop" style="font-weight:600;margin-top:12px"></div>
-    <ol id="ds-hs"></ol>
   </div>
 
-  <script>
-    const SUPABASE_URL = "https://lgvqdlqkoekhppppnpga.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_ZmgM7v7l0pVH8jl9FCZb6w_WSw9JIb1";
-    const MIEN = "@diemdanh.test";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const $ = id => document.getElementById(id);
-    let gv = null;
+  <!-- MÀN HÌNH LỚP -->
+  <div id="mLop" class="an">
+    <div class="top" style="display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:2">
+      <button class="tb" style="border:none;font-size:26px;padding:0 6px" id="nutVe" aria-label="Quay lại">‹</button>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:19px;font-weight:600" id="tieuDeLop"></div>
+        <div style="font-size:12px;color:#b6c3dc" id="phuDeLop"></div>
+      </div>
+      <button class="tb" style="height:auto;padding:6px 10px;line-height:1.3" id="nutCaLop">Cả lớp<br>có mặt</button>
+    </div>
+    <div style="padding:8px 12px 0;font-size:12px;color:var(--phu)">Chạm vào trạng thái để đổi: Có mặt → Vắng P → Vắng KP</div>
+    <div id="hopLop" style="padding:0 12px"></div>
+    <div class="card" style="margin:8px 12px 12px" id="dsHs"></div>
+    <div class="chan">
+      <div style="font-size:13px;color:var(--phu);line-height:1.5" id="tongLop"></div>
+      <button class="nut-chinh" id="nutChot">Chốt</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
 
-    function homNay() { return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }); }
-    function thuCua(ngay) { const d = new Date(ngay + "T00:00:00Z").getUTCDay(); return d === 0 ? 8 : d + 1; }
-    function tenThu(t) { return t === 8 ? "Chủ nhật" : "thứ " + ["", "", "Hai", "Ba", "Tư", "Năm", "Sáu", "Bảy"][t]; }
-    function tenBuoi(b) { return b === "sang" ? "sáng" : "chiều"; }
+<script>
+const SUPABASE_URL = "https://lgvqdlqkoekhppppnpga.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ZmgM7v7l0pVH8jl9FCZb6w_WSw9JIb1";
+const MIEN = "@diemdanh.test";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function chip(chu, mau) {
-      const s = document.createElement("span");
-      s.className = "chip"; s.textContent = chu;
-      s.style.background = "var(--" + mau + "-nhat)"; s.style.color = "var(--" + mau + ")";
-      $("vai").appendChild(s);
-    }
-    function hop(chu, mau) {
-      const h = $("hom-nay"); h.textContent = chu;
-      h.style.background = "var(--" + mau + "-nhat)"; h.style.color = "var(--" + mau + ")";
-    }
-    function hienDangNhap() {
-      $("man-chinh").classList.add("an"); $("khung-mk").classList.add("an");
-      $("man-dang-nhap").classList.remove("an");
-    }
+const $ = id => document.getElementById(id);
+const THU = ["", "", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"];
+const S = { gv: null, ngay: null, buoi: "sang", diem: null, dt: [], lop: [], lich: [], pc: [],
+            gvTen: {}, gvTpt: {}, bd: null, lopMo: null, hs: [], tt: {}, daChot: null, tok: 0 };
 
-    // ĐĂNG NHẬP
-    $("nut-dn").onclick = async () => {
-      const ten = $("ten").value.trim().toLowerCase(), mk = $("mk").value;
-      $("loi-dn").textContent = "";
-      if (!ten || !mk) { $("loi-dn").textContent = "Nhập tên đăng nhập và mật khẩu"; return; }
-      const email = ten.includes("@") ? ten : ten + MIEN;
-      $("nut-dn").disabled = true; $("nut-dn").textContent = "Đang đăng nhập...";
-      const { error } = await sb.auth.signInWithPassword({ email, password: mk });
-      $("nut-dn").disabled = false; $("nut-dn").textContent = "Đăng nhập";
-      if (error) {
-        $("loi-dn").textContent = error.code === "invalid_credentials"
-          ? "Sai tên đăng nhập hoặc mật khẩu"
-          : "Chưa đăng nhập được. Kiểm tra mạng rồi thử lại.";
-        return;
-      }
-      $("mk").value = "";
-      await vaoApp();
-    };
-    $("mk").addEventListener("keydown", e => { if (e.key === "Enter") $("nut-dn").click(); });
+/* ---------- Tiện ích ---------- */
+function homNay() {
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const g = t => p.find(x => x.type === t).value;
+  return g("year") + "-" + g("month") + "-" + g("day");
+}
+function gioVN() {
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+}
+function cong(n, k) { const d = new Date(n + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + k); return d.toISOString().slice(0, 10); }
+function thuCua(n) { const d = new Date(n + "T00:00:00Z").getUTCDay(); return d === 0 ? 8 : d + 1; }
+function dm(n) { return n.slice(8, 10) + "/" + n.slice(5, 7); }
+function dmy(n) { return dm(n) + "/" + n.slice(0, 4); }
+function tenBuoi(b) { return b === "sang" ? "Sáng" : "Chiều"; }
+function gioLuc(t) {
+  const d = new Date(t);
+  return d.toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" }) + " " +
+         d.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit" });
+}
+function toast(t) {
+  const e = $("toast"); e.textContent = t; e.style.display = "block";
+  clearTimeout(toast.h); toast.h = setTimeout(() => { e.style.display = "none"; }, 3500);
+}
+// Tạo phần tử; chữ luôn đưa vào dạng văn bản thuần (không chạy được mã lạ)
+function el(tag, props, ...con) {
+  const e = document.createElement(tag);
+  if (props) for (const k in props) {
+    if (k === "class") e.className = props[k];
+    else if (k === "text") e.textContent = props[k];
+    else if (k.startsWith("on")) e[k] = props[k];
+    else e.setAttribute(k, props[k]);
+  }
+  con.flat().forEach(c => { if (c != null) e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return e;
+}
+function man(id) { ["mDangNhap", "mChinh", "mLop"].forEach(x => $(x).classList.toggle("an", x !== id)); window.scrollTo(0, 0); }
 
-    // SAU KHI ĐĂNG NHẬP
-    async function vaoApp() {
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user) { hienDangNhap(); return; }
+/* ---------- Quyền (chỉ để hiện cảnh báo sớm; máy chủ mới là nơi quyết định) ---------- */
+const laLanhDao = () => ["quan_tri", "hieu_truong", "pho_hieu_truong"].includes(S.gv.vai_tro);
+const xemHet = () => laLanhDao() || S.gv.la_tpt || S.gv.du_phong;
+const cuaToi = () => S.pc.filter(p => p.giao_vien_id === S.gv.id);
+function trucLuc(ngay, buoi, dt) {
+  const t = thuCua(ngay);
+  return S.pc.filter(p => p.thu === t && p.buoi === buoi && ngay >= p.tu_ngay && ngay <= p.den_ngay && (dt == null || p.diem_truong_id === dt));
+}
+function coLich(lopId, ngay, buoi) { const t = thuCua(ngay); return S.lich.some(x => x.lop_id === lopId && x.thu === t && x.buoi === buoi); }
+function chuaDen(ngay, buoi) {
+  const h = homNay();
+  if (ngay > h) return "Chưa đến buổi " + tenBuoi(buoi).toLowerCase() + " " + dm(ngay) + ", đến đúng buổi trực mới thao tác được.";
+  if (ngay === h && buoi === "chieu" && gioVN() < 11) return "Chưa đến buổi chiều, từ 11 giờ mới thao tác được buổi chiều.";
+  return "";
+}
+function duocChot(dt) { return S.gv.du_phong || trucLuc(S.ngay, S.buoi, dt).some(p => p.giao_vien_id === S.gv.id); }
+function xemLop(l) {
+  if (xemHet() || l.id === S.gv.lop_chu_nhiem_id) return true;
+  return cuaToi().some(p => p.diem_truong_id === l.diem_truong_id && p.tu_ngay <= homNay());
+}
+function dsDiem() {
+  if (xemHet()) return S.dt;
+  const ids = new Set(S.lop.filter(xemLop).map(l => l.diem_truong_id));
+  return S.dt.filter(d => ids.has(d.id));
+}
 
-      const { data, error } = await sb.from("giao_vien")
-        .select("id, ho_ten, vai_tro, lop_chu_nhiem_id").eq("user_id", user.id).maybeSingle();
-      if (error || !data) {
-        await sb.auth.signOut(); hienDangNhap();
-        $("loi-dn").textContent = "Tài khoản chưa được cấp quyền. Liên hệ Quản trị.";
-        return;
-      }
-      gv = data;
-      $("man-dang-nhap").classList.add("an"); $("man-chinh").classList.remove("an");
-      $("ten-gv").textContent = gv.ho_ten; $("vai").innerHTML = "";
+/* ---------- Đăng nhập ---------- */
+$("nutDn").onclick = async () => {
+  const ten = $("ten").value.trim().toLowerCase(), mk = $("mk").value;
+  $("loiDn").textContent = "";
+  if (!ten || !mk) { $("loiDn").textContent = "Nhập tên đăng nhập và mật khẩu"; return; }
+  const email = ten.includes("@") ? ten : ten + MIEN;
+  const nut = $("nutDn"); nut.disabled = true; nut.textContent = "Đang đăng nhập...";
+  const { error } = await sb.auth.signInWithPassword({ email, password: mk });
+  nut.disabled = false; nut.textContent = "Đăng nhập";
+  if (error) {
+    $("loiDn").textContent = error.code === "invalid_credentials"
+      ? "Sai tên đăng nhập hoặc mật khẩu" : "Chưa đăng nhập được. Kiểm tra mạng rồi thử lại.";
+    return;
+  }
+  $("mk").value = "";
+  await vaoApp();
+};
+$("mk").addEventListener("keydown", e => { if (e.key === "Enter") $("nutDn").click(); });
 
-      const { data: dsLop } = await sb.from("lop").select("id, ten").order("ten");
-      const lopCN = (dsLop || []).find(l => l.id === gv.lop_chu_nhiem_id);
-      const nay = homNay(), thu = thuCua(nay), ngayVN = nay.slice(8, 10) + "/" + nay.slice(5, 7);
-      const { data: pc } = await sb.from("phan_cong_truc").select("thu, buoi")
-        .eq("giao_vien_id", gv.id).lte("tu_ngay", nay).gte("den_ngay", nay).order("thu");
+async function vaoApp() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { man("mDangNhap"); return; }
+  const { data: gv, error } = await sb.from("giao_vien")
+    .select("id, ho_ten, vai_tro, lop_chu_nhiem_id, la_tpt, du_phong").eq("user_id", user.id).maybeSingle();
+  if (error || !gv) {
+    await sb.auth.signOut(); man("mDangNhap");
+    $("loiDn").textContent = "Tài khoản chưa được cấp quyền. Liên hệ Quản trị.";
+    return;
+  }
+  S.gv = gv;
+  const kq = await Promise.all([
+    sb.from("diem_truong").select("id, ten").order("id"),
+    sb.from("lop").select("id, ten, khoi, diem_truong_id").order("ten"),
+    sb.from("lich_hoc").select("lop_id, thu, buoi"),
+    sb.from("phan_cong_truc").select("giao_vien_id, diem_truong_id, thu, buoi, tu_ngay, den_ngay"),
+    sb.from("giao_vien").select("id, ho_ten, la_tpt"),
+    sb.from("cai_dat").select("khoa, gia_tri")
+  ]);
+  const hong = kq.find(r => r.error);
+  if (hong) toast("Không tải được dữ liệu: " + hong.error.message);
+  S.dt = kq[0].data || []; S.lop = kq[1].data || []; S.lich = kq[2].data || []; S.pc = kq[3].data || [];
+  S.gvTen = {}; S.gvTpt = {};
+  (kq[4].data || []).forEach(g => { S.gvTen[g.id] = g.ho_ten; S.gvTpt[g.id] = g.la_tpt; });
+  const bd = (kq[5].data || []).find(x => x.khoa === "ngay_bat_dau"); S.bd = bd ? bd.gia_tri : null;
 
-      if (gv.vai_tro === "quan_tri") chip("Quản trị", "do");
-      if (gv.vai_tro === "hieu_truong") chip("Hiệu trưởng · chỉ xem", "tim");
-      if (gv.vai_tro === "pho_hieu_truong") chip("Phó Hiệu trưởng · chỉ xem", "tim");
-      if (lopCN) chip("GVCN " + lopCN.ten, "xanh");
-      if (pc && pc.length) chip("Giáo viên trực", "luc");
+  S.ngay = homNay(); S.buoi = gioVN() < 11 ? "sang" : "chieu";
+  const vt = [];
+  if (gv.vai_tro === "quan_tri") vt.push("Quản trị");
+  if (gv.vai_tro === "hieu_truong") vt.push("Hiệu trưởng");
+  if (gv.vai_tro === "pho_hieu_truong") vt.push("Phó Hiệu trưởng");
+  if (gv.la_tpt) vt.push("Tổng phụ trách Đội");
+  if (gv.du_phong) vt.push("Trực dự phòng"); else if (cuaToi().length) vt.push("Giáo viên trực");
+  const lcn = S.lop.find(l => l.id === gv.lop_chu_nhiem_id); if (lcn) vt.push("GVCN " + lcn.ten);
+  $("vaiTro").textContent = vt.join(" · ") || "Giáo viên";
+  $("tenGv").textContent = gv.ho_ten;
 
-      if (gv.vai_tro === "quan_tri") hop("Bạn có toàn quyền", "do");
-      else if (gv.vai_tro !== "giao_vien") hop("Bạn xem được toàn bộ, không sửa dữ liệu", "tim");
-      else if (pc && pc.length) {
-        const truc = pc.filter(p => p.thu === thu);
-        if (truc.length) hop("Hôm nay " + tenThu(thu) + " " + ngayVN + " · bạn trực buổi "
-          + truc.map(p => tenBuoi(p.buoi)).join(" và "), "luc");
-        else hop("Hôm nay bạn không có buổi trực. Lịch của bạn: "
-          + pc.map(p => tenBuoi(p.buoi) + " " + tenThu(p.thu)).join(", "), "vang");
-      } else hop("Bạn không có lịch trực trong đợt này", "vang");
+  const truc = trucLuc(S.ngay, S.buoi).find(p => p.giao_vien_id === gv.id);
+  const ph = S.dt.find(d => d.ten === "Phân hiệu");
+  S.diem = truc ? truc.diem_truong_id : (ph ? ph.id : (S.dt[0] && S.dt[0].id));
+  man("mChinh"); veChinh();
+  if (!(user.user_metadata && user.user_metadata.da_doi_mk)) moMk("Lần đầu đăng nhập: hãy đổi mật khẩu do Quản trị cấp.");
+}
 
-      veLop(dsLop || []);
-      if (!user.user_metadata || !user.user_metadata.da_doi_mk)
-        moDoiMk("Lần đầu đăng nhập: hãy đổi mật khẩu do Quản trị cấp.");
-    }
+/* ---------- Màn hình chính ---------- */
+async function veChinh() {
+  const tok = ++S.tok, h = homNay();
+  $("nhanNgay").textContent = THU[thuCua(S.ngay)] + " " + dm(S.ngay) + (S.ngay === h ? " (hôm nay)" : "");
+  document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.b === S.buoi));
 
-    // DANH SÁCH LỚP VÀ HỌC SINH
-    function veLop(ds) {
-      const k = $("ds-lop"); k.innerHTML = ""; $("td-lop").textContent = ""; $("ds-hs").innerHTML = "";
-      ds.forEach(l => {
-        const b = document.createElement("button");
-        b.className = "nut-lop"; b.textContent = l.ten;
-        b.onclick = () => {
-          document.querySelectorAll(".nut-lop").forEach(x => x.classList.remove("chon"));
-          b.classList.add("chon"); taiHocSinh(l);
-        };
-        k.appendChild(b);
-      });
-    }
-    async function taiHocSinh(l) {
-      $("td-lop").textContent = "Đang tải lớp " + l.ten + "..."; $("ds-hs").innerHTML = "";
-      const { data, error } = await sb.from("hoc_sinh").select("ho_ten")
-        .eq("lop_id", l.id).eq("dang_hoc", true).order("ho_ten");
-      if (error) { $("td-lop").textContent = "Không tải được. Thử lại sau."; return; }
-      if (!data.length) { $("td-lop").textContent = "Lớp " + l.ten + ": bạn không được xem danh sách lớp này"; return; }
-      $("td-lop").textContent = "Lớp " + l.ten + " – " + data.length + " học sinh";
-      data.forEach(h => { const li = document.createElement("li"); li.textContent = h.ho_ten; $("ds-hs").appendChild(li); });
-    }
+  const ds = dsDiem();
+  if (!ds.some(d => d.id === S.diem)) S.diem = ds[0] && ds[0].id;
+  $("chips").replaceChildren(...ds.map(d =>
+    el("button", { class: "chip" + (d.id === S.diem ? " on" : ""), text: d.ten, onclick: () => { S.diem = d.id; veChinh(); } })));
+  veLich();
 
-    // ĐỔI MẬT KHẨU
-    function moDoiMk(ghiChu) { $("khung-mk").classList.remove("an"); $("ghi-chu-mk").textContent = ghiChu || ""; }
-    $("nut-mo-mk").onclick = () => { $("khung-mk").classList.toggle("an"); $("ghi-chu-mk").textContent = ""; };
-    $("nut-luu-mk").onclick = async () => {
-      const a = $("mk1").value, b = $("mk2").value, loi = $("loi-mk");
-      loi.style.color = ""; loi.textContent = "";
-      if (a.length < 8) { loi.textContent = "Mật khẩu mới cần ít nhất 8 ký tự"; return; }
-      if (a !== b) { loi.textContent = "Hai lần nhập không khớp"; return; }
-      const { error } = await sb.auth.updateUser({ password: a, data: { da_doi_mk: true } });
-      if (error) { loi.textContent = "Chưa đổi được: " + error.message; return; }
-      $("mk1").value = ""; $("mk2").value = "";
-      loi.style.color = "var(--luc)"; loi.textContent = "Đã đổi mật khẩu";
-      setTimeout(() => { $("khung-mk").classList.add("an"); loi.textContent = ""; loi.style.color = ""; }, 1500);
-    };
+  const dt = S.dt.find(d => d.id === S.diem);
+  $("tenDiem").textContent = dt ? dt.ten : "";
+  const tr = trucLuc(S.ngay, S.buoi, S.diem);
+  $("nguoiTruc").textContent = tr.length ? "Trực: " + tr.map(p => S.gvTen[p.giao_vien_id] || "").join(", ")
+                                         : (laLanhDao() || S.gv.la_tpt ? "Chưa phân công trực buổi này" : "");
 
-    // ĐĂNG XUẤT
-    $("nut-dx").onclick = async () => { await sb.auth.signOut(); gv = null; hienDangNhap(); };
+  const coHoc = S.lop.filter(l => l.diem_truong_id === S.diem && xemLop(l) && coLich(l.id, S.ngay, S.buoi));
+  const hop = $("hopBuoi"); hop.replaceChildren();
+  const cd = chuaDen(S.ngay, S.buoi);
+  if (S.bd && S.ngay < S.bd) hop.append(el("div", { class: "hop", text: "Trước ngày áp dụng app (" + dmy(S.bd) + "), chỉ xem." }));
+  else if (cd) hop.append(el("div", { class: "hop", text: cd }));
+  else if (coHoc.length && !duocChot(S.diem)) hop.append(el("div", { class: "hop tin", text: "Thầy/cô không trực buổi này: mở lớp để xem, nhấn Chốt sẽ được nhắc." }));
+  if (!coHoc.length) hop.append(el("div", { class: "hop tin", text: "Buổi này không có lớp nào có lịch học." }));
 
-    vaoApp();
-  </script>
-</body>
-</html>
+  $("luoi").replaceChildren(); $("demLop").textContent = "";
+  napDeNghi(tok);
+  if (!coHoc.length) return;
+  const { data: bc, error } = await sb.from("buoi_chot").select("lop_id, si_so, so_p, so_kp")
+    .eq("ngay", S.ngay).eq("buoi", S.buoi).in("lop_id", coHoc.map(l => l.id));
+  if (tok !== S.tok) return;
+  if (error) { toast("Không tải được: " + error.message); return; }
+  const m = {}; (bc || []).forEach(x => { m[x.lop_id] = x; });
+  let xong = 0;
+  coHoc.forEach(l => {
+    const x = m[l.id]; if (x) xong++;
+    $("luoi").append(el("div", { class: "o" + (x ? " xong" : ""), onclick: () => moLop(l) },
+      el("b", { text: l.ten }),
+      el("span", { text: x ? "✓ " + (x.si_so - x.so_p - x.so_kp) + "/" + x.si_so : "Chưa chấm" })));
+  });
+  $("demLop").textContent = "Đã chấm " + xong + "/" + coHoc.length + " lớp";
+}
+
+function veLich() {
+  const ds = [], h = homNay();
+  for (let k = 0; k < 21 && ds.length < 4; k++) {
+    const n = cong(h, k);
+    ["sang", "chieu"].forEach(b => trucLuc(n, b).filter(p => p.giao_vien_id === S.gv.id)
+      .forEach(p => ds.push({ ngay: n, buoi: b, dt: p.diem_truong_id })));
+  }
+  $("khuLich").classList.toggle("an", !ds.length);
+  $("dsLich").replaceChildren(...ds.slice(0, 4).map(x => {
+    const dang = x.ngay === S.ngay && x.buoi === S.buoi && x.dt === S.diem;
+    const ten = (S.dt.find(d => d.id === x.dt) || {}).ten || "";
+    return el("div", { class: "dong" + (dang ? " dang" : ""),
+                       onclick: () => { S.ngay = x.ngay; S.buoi = x.buoi; S.diem = x.dt; veChinh(); } },
+      el("div", {},
+        el("div", { style: "font-weight:600", text: THU[thuCua(x.ngay)] + " " + dm(x.ngay) + " · " + tenBuoi(x.buoi) + (x.ngay === h ? " (hôm nay)" : "") }),
+        el("div", { style: "font-size:12px;color:var(--phu)", text: ten })),
+      dang ? el("span", { style: "color:var(--luc);font-size:12px", text: "Đang xem" })
+           : el("span", { class: "nhan", text: x.ngay === h ? "Hôm nay" : "Sắp tới" }));
+  }));
+}
+
+/* ---------- Đề nghị chờ xử lý (Tổng phụ trách Đội / giáo viên trực) ---------- */
+async function napDeNghi(tok) {
+  const k = $("khuDeNghi");
+  if (!(S.gv.la_tpt || S.gv.du_phong || cuaToi().length)) { k.replaceChildren(); return; }
+  const { data, error } = await sb.from("de_nghi")
+    .select("id, kieu, hoc_sinh_id, hoc_sinh_dung_id, loai_dung, lop_id, ngay, buoi, ly_do, nguoi_gui")
+    .eq("trang_thai", "cho").order("luc_gui");
+  if (tok !== S.tok) return;
+  if (error || !data) { k.replaceChildren(); return; }
+  const cuaMinh = data.filter(d => {
+    if (d.nguoi_gui === S.gv.id) return false;
+    const l = S.lop.find(x => x.id === d.lop_id);
+    if (S.gvTpt[d.nguoi_gui]) return S.gv.du_phong || (l && trucLuc(d.ngay, d.buoi, l.diem_truong_id).some(p => p.giao_vien_id === S.gv.id));
+    return S.gv.la_tpt;
+  });
+  if (!cuaMinh.length) { k.replaceChildren(); return; }
+  const ids = [...new Set(cuaMinh.flatMap(d => [d.hoc_sinh_id, d.hoc_sinh_dung_id]).filter(Boolean))];
+  const { data: hs } = await sb.from("hoc_sinh").select("id, ho_ten").in("id", ids);
+  if (tok !== S.tok) return;
+  const ten = {}; (hs || []).forEach(x => { ten[x.id] = x.ho_ten; });
+  k.replaceChildren(el("div", { class: "nh", text: "Đề nghị chờ xử lý (" + cuaMinh.length + ")" }),
+    ...cuaMinh.map(d => {
+      const l = S.lop.find(x => x.id === d.lop_id) || {};
+      const chotLai = !!S.gvTpt[d.nguoi_gui];
+      const moTa = d.kieu === "chuyen_p"
+        ? "Buổi " + tenBuoi(d.buoi).toLowerCase() + " " + dm(d.ngay) + ": đang ghi KP, GVCN " + (S.gvTen[d.nguoi_gui] || "") + " đề nghị chuyển P"
+        : "Buổi " + tenBuoi(d.buoi).toLowerCase() + " " + dm(d.ngay) + ": GVCN " + (S.gvTen[d.nguoi_gui] || "") + " báo ghi nhầm tên. " +
+          (d.hoc_sinh_dung_id ? "Em vắng đúng là " + (ten[d.hoc_sinh_dung_id] || "") + " (" + d.loai_dung + ")" : "Em này có mặt");
+      const xuLy = async (dongY, nut) => {
+        nut.disabled = true;
+        const { data: kq, error: loi } = await sb.rpc("xu_ly_de_nghi", { p_id: d.id, p_dong_y: dongY });
+        nut.disabled = false;
+        if (loi) { toast("Chưa xử lý được: " + loi.message); return; }
+        toast(kq); veChinh();
+      };
+      const nutGiu = el("button", { class: "nut", text: d.kieu === "chuyen_p" ? "Giữ nguyên KP" : "Giữ nguyên" });
+      const nutOk = el("button", { class: "nut dong-y", text: chotLai ? "Đồng ý, chốt lại" : "Đồng ý" });
+      nutGiu.onclick = () => xuLy(false, nutGiu); nutOk.onclick = () => xuLy(true, nutOk);
+      return el("div", { class: "dn" },
+        el("div", { style: "display:flex;gap:8px;align-items:center" },
+          el("b", { text: ten[d.hoc_sinh_id] || "" }), el("span", { class: "nhan", text: l.ten || "" })),
+        el("div", { style: "font-size:13px;color:var(--phu);margin-top:4px", text: moTa }),
+        el("div", { style: "font-size:13px;margin-top:4px", text: "Lý do: " + d.ly_do }),
+        el("div", { style: "display:flex;gap:8px;margin-top:10px" }, nutGiu, nutOk));
+    }));
+}
+
+/* ---------- Màn hình lớp ---------- */
+async function moLop(l) {
+  S.lopMo = l; man("mLop");
+  $("tieuDeLop").textContent = "Lớp " + l.ten; $("phuDeLop").textContent = "Đang tải...";
+  $("dsHs").replaceChildren(); $("hopLop").replaceChildren(); $("tongLop").textContent = "";
+  const kq = await Promise.all([
+    sb.from("hoc_sinh").select("id, ho_ten").eq("lop_id", l.id).eq("dang_hoc", true).order("id"),
+    sb.from("vang").select("hoc_sinh_id, loai, ly_do, nguon").eq("lop_id", l.id).eq("ngay", S.ngay).eq("buoi", S.buoi),
+    sb.from("buoi_chot").select("si_so, so_p, so_kp, nguoi_chot, lan_chot, luc").eq("lop_id", l.id).eq("ngay", S.ngay).eq("buoi", S.buoi).maybeSingle(),
+    sb.from("de_nghi").select("hoc_sinh_id, ly_do").eq("lop_id", l.id).eq("ngay", S.ngay).eq("buoi", S.buoi)
+      .eq("kieu", "bao_phep").eq("trang_thai", "ghi_nhan")
+  ]);
+  if (S.lopMo !== l) return;
+  const hong = kq.find(r => r.error);
+  if (hong) { $("phuDeLop").textContent = "Không tải được"; toast(hong.error.message); return; }
+  S.hs = kq[0].data || []; S.daChot = kq[2].data; S.tt = {};
+  if (S.daChot) (kq[1].data || []).forEach(v => { S.tt[v.hoc_sinh_id] = { t: v.loai, ld: v.ly_do || "" }; });
+  else (kq[3].data || []).forEach(p => { S.tt[p.hoc_sinh_id] = { t: "P", ld: p.ly_do, gvcn: true }; });
+
+  const ten = (S.dt.find(d => d.id === l.diem_truong_id) || {}).ten || "";
+  $("phuDeLop").textContent = "Buổi " + tenBuoi(S.buoi).toLowerCase() + " · " + dmy(S.ngay) + " · " + ten + (S.daChot ? " · đã chốt" : "");
+  if (S.daChot) $("hopLop").append(el("div", { class: "hop tin",
+    text: "Đã chốt " + (S.daChot.lan_chot > 1 ? "lần " + S.daChot.lan_chot + " " : "") + "lúc " + gioLuc(S.daChot.luc) +
+          (S.gvTen[S.daChot.nguoi_chot] ? " · " + S.gvTen[S.daChot.nguoi_chot] : "") }));
+  const baoTruoc = Object.values(S.tt).filter(x => x.gvcn).length;
+  if (baoTruoc) $("hopLop").append(el("div", { class:
