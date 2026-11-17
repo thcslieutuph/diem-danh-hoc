@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Điểm danh học sinh</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://lgvqdlqkoekhppppnpga.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{--navy:#15305a;--navy2:#2b4877;--nen:#f1f3f7;--chu:#17233b;--phu:#5c6a85;--vien:#e1e5ec;
   --xanh:#2463c9;--luc:#1b7a3d;--luc-nhat:#e3f3e8;--cam:#b5600c;--cam-nhat:#fbecd6;--do:#b42323;--do-nhat:#fde5e5}
@@ -58,6 +60,7 @@ label{display:block;font-size:13px;color:var(--phu);margin:12px 0 4px}
 .dn{border:1px solid #f1d9a8;border-radius:14px;background:#fff;padding:12px;margin-bottom:8px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#17233b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90%;z-index:9;display:none}
 .an{display:none!important}
+.do{font-size:11px;color:#8a94a8;text-align:center;margin-top:14px}
 </style>
 </head>
 <body>
@@ -134,6 +137,7 @@ label{display:block;font-size:13px;color:var(--phu);margin:12px 0 4px}
       </div>
       <div id="hopBuoi"></div>
       <div class="luoi" id="luoi" style="margin-top:10px"></div>
+      <div class="do" id="do1"></div>
     </div>
   </div>
 
@@ -150,6 +154,7 @@ label{display:block;font-size:13px;color:var(--phu);margin:12px 0 4px}
     <div style="padding:8px 12px 0;font-size:12px;color:var(--phu)">Chạm vào trạng thái để đổi: Có mặt → Vắng P → Vắng KP</div>
     <div id="hopLop" style="padding:0 12px"></div>
     <div class="card" style="margin:8px 12px 12px" id="dsHs"></div>
+    <div class="do" id="do2" style="padding:0 12px 10px"></div>
     <div class="chan">
       <div style="font-size:13px;color:var(--phu);line-height:1.5" id="tongLop"></div>
       <button class="nut-chinh" id="nutChot">Chốt</button>
@@ -166,17 +171,19 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = id => document.getElementById(id);
 const THU = ["", "", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"];
-const S = { gv: null, ngay: null, buoi: "sang", diem: null, dt: [], lop: [], lich: [], pc: [],
-            gvTen: {}, gvTpt: {}, bd: null, lopMo: null, hs: [], tt: {}, daChot: null, tok: 0 };
+const S = { gv: null, uid: null, ngay: null, buoi: "sang", diem: null, dt: [], lop: [], lich: [], pc: [],
+            gvTen: {}, gvTpt: {}, bd: null, lopMo: null, hs: [], tt: {}, daChot: null, tok: 0, lech: 0, doTg: {} };
 
 /* ---------- Tiện ích ---------- */
+// Giờ lấy theo máy chủ (S.lech), để điện thoại chỉnh sai giờ cũng không lệch ngày
+function bayGio() { return new Date(Date.now() + S.lech); }
 function homNay() {
-  const p = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(bayGio());
   const g = t => p.find(x => x.type === t).value;
   return g("year") + "-" + g("month") + "-" + g("day");
 }
 function gioVN() {
-  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", hourCycle: "h23" }).format(bayGio()));
 }
 function cong(n, k) { const d = new Date(n + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + k); return d.toISOString().slice(0, 10); }
 function thuCua(n) { const d = new Date(n + "T00:00:00Z").getUTCDay(); return d === 0 ? 8 : d + 1; }
@@ -205,6 +212,23 @@ function el(tag, props, ...con) {
   return e;
 }
 function man(id) { ["mDangNhap", "mChinh", "mLop"].forEach(x => $(x).classList.toggle("an", x !== id)); window.scrollTo(0, 0); }
+
+// Đồng hồ đo tốc độ (hiện cuối trang)
+const TEN_DO = { kd: "Khởi động", buoi: "Tải buổi", lop: "Mở lớp", chot: "Chốt" };
+function ghiDo(k, t0) {
+  S.doTg[k] = Math.round(performance.now() - t0);
+  const txt = Object.keys(TEN_DO).filter(x => S.doTg[x] != null).map(x => TEN_DO[x] + " " + S.doTg[x] + " ms").join(" · ");
+  $("do1").textContent = txt; $("do2").textContent = txt;
+}
+// Gọi lệnh máy chủ, quá 15 giây thì báo lỗi thay vì treo
+async function goi(ten, thamSo) {
+  const hetGio = new Promise(r => setTimeout(() => r({ error: { message: "máy chủ không phản hồi, kiểm tra mạng rồi thử lại" } }), 15000));
+  return Promise.race([sb.rpc(ten, thamSo || {}), hetGio]);
+}
+function boNho(k, v) {
+  try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); }
+  catch (e) { return null; }
+}
 
 /* ---------- Quyền (chỉ để hiện cảnh báo sớm; máy chủ mới là nơi quyết định) ---------- */
 const laLanhDao = () => ["quan_tri", "hieu_truong", "pho_hieu_truong"].includes(S.gv.vai_tro);
@@ -251,35 +275,16 @@ $("nutDn").onclick = async () => {
 };
 $("mk").addEventListener("keydown", e => { if (e.key === "Enter") $("nutDn").click(); });
 
-async function vaoApp() {
-  const { data: { session } } = await sb.auth.getSession();
-  const user = session && session.user;
-  if (!user) { man("mDangNhap"); return; }
-  const { data: gv, error } = await sb.from("giao_vien")
-    .select("id, ho_ten, vai_tro, lop_chu_nhiem_id, la_tpt, du_phong").eq("user_id", user.id).maybeSingle();
-  if (error || !gv) {
-    await sb.auth.signOut(); man("mDangNhap");
-    $("loiDn").textContent = "Tài khoản chưa được cấp quyền. Liên hệ Quản trị.";
-    return;
-  }
-  S.gv = gv;
-  const kq = await Promise.all([
-    sb.from("diem_truong").select("id, ten").order("id"),
-    sb.from("lop").select("id, ten, khoi, diem_truong_id").order("ten"),
-    sb.from("lich_hoc").select("lop_id, thu, buoi"),
-    sb.from("phan_cong_truc").select("giao_vien_id, diem_truong_id, thu, buoi, tu_ngay, den_ngay"),
-    sb.from("giao_vien").select("id, ho_ten, la_tpt"),
-    sb.from("cai_dat").select("khoa, gia_tri")
-  ]);
-  const hong = kq.find(r => r.error);
-  if (hong) toast("Không tải được dữ liệu: " + hong.error.message);
-  S.dt = kq[0].data || []; S.lop = kq[1].data || []; S.lich = kq[2].data || []; S.pc = kq[3].data || [];
+// Nạp dữ liệu khởi động vào trạng thái
+function napKD(d) {
+  S.gv = d.gv; S.dt = d.dt || []; S.lop = d.lop || []; S.lich = d.lich || []; S.pc = d.pc || [];
   S.gvTen = {}; S.gvTpt = {};
-  (kq[4].data || []).forEach(g => { S.gvTen[g.id] = g.ho_ten; S.gvTpt[g.id] = g.la_tpt; });
-  const bd = (kq[5].data || []).find(x => x.khoa === "ngay_bat_dau"); S.bd = bd ? bd.gia_tri : null;
-
-  S.ngay = homNay(); S.buoi = gioVN() < 11 ? "sang" : "chieu";
-  const vt = [];
+  (d.gvs || []).forEach(g => { S.gvTen[g.id] = g.ho_ten; S.gvTpt[g.id] = g.la_tpt; });
+  S.bd = (d.cai_dat || {}).ngay_bat_dau || null;
+  if (d.gio) S.lech = d.gio - Date.now();
+}
+function veDauTrang(user) {
+  const gv = S.gv, vt = [];
   if (gv.vai_tro === "quan_tri") vt.push("Quản trị");
   if (gv.vai_tro === "hieu_truong") vt.push("Hiệu trưởng");
   if (gv.vai_tro === "pho_hieu_truong") vt.push("Phó Hiệu trưởng");
@@ -288,11 +293,39 @@ async function vaoApp() {
   const lcn = S.lop.find(l => l.id === gv.lop_chu_nhiem_id); if (lcn) vt.push("GVCN " + lcn.ten);
   $("vaiTro").textContent = vt.join(" · ") || "Giáo viên";
   $("tenGv").textContent = gv.ho_ten;
-
-  const truc = trucLuc(S.ngay, S.buoi).find(p => p.giao_vien_id === gv.id);
+}
+function chonMacDinh() {
+  S.ngay = homNay(); S.buoi = gioVN() < 11 ? "sang" : "chieu";
+  const truc = trucLuc(S.ngay, S.buoi).find(p => p.giao_vien_id === S.gv.id);
   const ph = S.dt.find(d => d.ten === "Phân hiệu");
   S.diem = truc ? truc.diem_truong_id : (ph ? ph.id : (S.dt[0] && S.dt[0].id));
-  man("mChinh"); veChinh();
+}
+
+async function vaoApp() {
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session && session.user;
+  if (!user) { man("mDangNhap"); return; }
+  S.uid = user.id;
+  const khoa = "dd_kd_" + user.id;
+  // 1. Có dữ liệu lưu sẵn: hiện ngay, cập nhật ngầm
+  const cu = boNho(khoa);
+  if (cu && cu.gv) { napKD(cu); veDauTrang(); chonMacDinh(); man("mChinh"); veChinh(); }
+  // 2. Hỏi máy chủ một lần cho toàn bộ danh mục
+  const t0 = performance.now();
+  const { data, error } = await goi("khoi_dong");
+  if (error) { if (!(cu && cu.gv)) throw new Error(error.message); toast("Đang dùng dữ liệu lưu sẵn: " + error.message); return; }
+  ghiDo("kd", t0);
+  if (!data || !data.gv) {
+    try { localStorage.removeItem(khoa); } catch (e) {}
+    await sb.auth.signOut(); man("mDangNhap");
+    $("loiDn").textContent = "Tài khoản chưa được cấp quyền. Liên hệ Quản trị.";
+    return;
+  }
+  boNho(khoa, data);
+  const daHien = cu && cu.gv;
+  napKD(data); veDauTrang();
+  if (!daHien) { chonMacDinh(); man("mChinh"); }
+  if (!$("mChinh").classList.contains("an")) veChinh();
   if (!(user.user_metadata && user.user_metadata.da_doi_mk)) moMk("Lần đầu đăng nhập: hãy đổi mật khẩu do Quản trị cấp.");
 }
 
@@ -322,22 +355,28 @@ async function veChinh() {
   else if (coHoc.length && !duocChot(S.diem)) hop.append(el("div", { class: "hop tin", text: "Thầy/cô không trực buổi này: mở lớp để xem, nhấn Chốt sẽ được nhắc." }));
   if (!coHoc.length) hop.append(el("div", { class: "hop tin", text: "Buổi này không có lớp nào có lịch học." }));
 
-  $("luoi").replaceChildren(); $("demLop").textContent = "";
-  napDeNghi(tok);
-  if (!coHoc.length) return;
-  const { data: bc, error } = await sb.from("buoi_chot").select("lop_id, si_so, so_p, so_kp")
-    .eq("ngay", S.ngay).eq("buoi", S.buoi).in("lop_id", coHoc.map(l => l.id));
+  // Vẽ ô lớp ngay (chưa có số), rồi điền số khi máy chủ trả lời
+  const o = {};
+  $("luoi").replaceChildren(...coHoc.map(l => {
+    o[l.id] = el("span", { text: "…" });
+    return el("div", { class: "o", onclick: () => moLop(l) }, el("b", { text: l.ten }), o[l.id]);
+  }));
+  $("demLop").textContent = "";
+
+  const t0 = performance.now();
+  const { data, error } = await goi("tong_buoi", { p_dt: S.diem, p_ngay: S.ngay, p_buoi: S.buoi });
   if (tok !== S.tok) return;
   if (error) { toast("Không tải được: " + error.message); return; }
-  const m = {}; (bc || []).forEach(x => { m[x.lop_id] = x; });
+  ghiDo("buoi", t0);
+  const m = {}; (data.chot || []).forEach(x => { m[x.lop_id] = x; });
   let xong = 0;
   coHoc.forEach(l => {
     const x = m[l.id]; if (x) xong++;
-    $("luoi").append(el("div", { class: "o" + (x ? " xong" : ""), onclick: () => moLop(l) },
-      el("b", { text: l.ten }),
-      el("span", { text: x ? "✓ " + (x.si_so - x.so_p - x.so_kp) + "/" + x.si_so : "Chưa chấm" })));
+    o[l.id].textContent = x ? "✓ " + (x.si_so - x.so_p - x.so_kp) + "/" + x.si_so : "Chưa chấm";
+    o[l.id].parentNode.classList.toggle("xong", !!x);
   });
-  $("demLop").textContent = "Đã chấm " + xong + "/" + coHoc.length + " lớp";
+  if (coHoc.length) $("demLop").textContent = "Đã chấm " + xong + "/" + coHoc.length + " lớp";
+  veDeNghi(data.de_nghi || []);
 }
 
 function veLich() {
@@ -362,25 +401,15 @@ function veLich() {
 }
 
 /* ---------- Đề nghị chờ xử lý (Tổng phụ trách Đội / giáo viên trực) ---------- */
-async function napDeNghi(tok) {
+function veDeNghi(ds) {
   const k = $("khuDeNghi");
-  if (!(S.gv.la_tpt || S.gv.du_phong || cuaToi().length)) { k.replaceChildren(); return; }
-  const { data, error } = await sb.from("de_nghi")
-    .select("id, kieu, hoc_sinh_id, hoc_sinh_dung_id, loai_dung, lop_id, ngay, buoi, ly_do, nguoi_gui")
-    .eq("trang_thai", "cho").order("luc_gui");
-  if (tok !== S.tok) return;
-  if (error || !data) { k.replaceChildren(); return; }
-  const cuaMinh = data.filter(d => {
+  const cuaMinh = ds.filter(d => {
     if (d.nguoi_gui === S.gv.id) return false;
     const l = S.lop.find(x => x.id === d.lop_id);
     if (S.gvTpt[d.nguoi_gui]) return S.gv.du_phong || (l && trucLuc(d.ngay, d.buoi, l.diem_truong_id).some(p => p.giao_vien_id === S.gv.id));
     return S.gv.la_tpt;
   });
   if (!cuaMinh.length) { k.replaceChildren(); return; }
-  const ids = [...new Set(cuaMinh.flatMap(d => [d.hoc_sinh_id, d.hoc_sinh_dung_id]).filter(Boolean))];
-  const { data: hs } = await sb.from("hoc_sinh").select("id, ho_ten").in("id", ids);
-  if (tok !== S.tok) return;
-  const ten = {}; (hs || []).forEach(x => { ten[x.id] = x.ho_ten; });
   k.replaceChildren(el("div", { class: "nh", text: "Đề nghị chờ xử lý (" + cuaMinh.length + ")" }),
     ...cuaMinh.map(d => {
       const l = S.lop.find(x => x.id === d.lop_id) || {};
@@ -388,10 +417,10 @@ async function napDeNghi(tok) {
       const moTa = d.kieu === "chuyen_p"
         ? "Buổi " + tenBuoi(d.buoi).toLowerCase() + " " + dm(d.ngay) + ": đang ghi KP, GVCN " + (S.gvTen[d.nguoi_gui] || "") + " đề nghị chuyển P"
         : "Buổi " + tenBuoi(d.buoi).toLowerCase() + " " + dm(d.ngay) + ": GVCN " + (S.gvTen[d.nguoi_gui] || "") + " báo ghi nhầm tên. " +
-          (d.hoc_sinh_dung_id ? "Em vắng đúng là " + (ten[d.hoc_sinh_dung_id] || "") + " (" + d.loai_dung + ")" : "Em này có mặt");
+          (d.hoc_sinh_dung_id ? "Em vắng đúng là " + (d.ten_dung || "") + " (" + d.loai_dung + ")" : "Em này có mặt");
       const xuLy = async (dongY, nut) => {
         nut.disabled = true;
-        const { data: kq, error: loi } = await sb.rpc("xu_ly_de_nghi", { p_id: d.id, p_dong_y: dongY });
+        const { data: kq, error: loi } = await goi("xu_ly_de_nghi", { p_id: d.id, p_dong_y: dongY });
         nut.disabled = false;
         if (loi) { toast("Chưa xử lý được: " + loi.message); return; }
         toast(kq); veChinh();
@@ -401,7 +430,7 @@ async function napDeNghi(tok) {
       nutGiu.onclick = () => xuLy(false, nutGiu); nutOk.onclick = () => xuLy(true, nutOk);
       return el("div", { class: "dn" },
         el("div", { style: "display:flex;gap:8px;align-items:center" },
-          el("b", { text: ten[d.hoc_sinh_id] || "" }), el("span", { class: "nhan", text: l.ten || "" })),
+          el("b", { text: d.ten || "" }), el("span", { class: "nhan", text: l.ten || "" })),
         el("div", { style: "font-size:13px;color:var(--phu);margin-top:4px", text: moTa }),
         el("div", { style: "font-size:13px;margin-top:4px", text: "Lý do: " + d.ly_do }),
         el("div", { style: "display:flex;gap:8px;margin-top:10px" }, nutGiu, nutOk));
@@ -413,19 +442,14 @@ async function moLop(l) {
   S.lopMo = l; man("mLop");
   $("tieuDeLop").textContent = "Lớp " + l.ten; $("phuDeLop").textContent = "Đang tải...";
   $("dsHs").replaceChildren(); $("hopLop").replaceChildren(); $("tongLop").textContent = "";
-  const kq = await Promise.all([
-    sb.from("hoc_sinh").select("id, ho_ten").eq("lop_id", l.id).eq("dang_hoc", true).order("id"),
-    sb.from("vang").select("hoc_sinh_id, loai, ly_do, nguon").eq("lop_id", l.id).eq("ngay", S.ngay).eq("buoi", S.buoi),
-    sb.from("buoi_chot").select("si_so, so_p, so_kp, nguoi_chot, lan_chot, luc").eq("lop_id", l.id).eq("ngay", S.ngay).eq("buoi", S.buoi).maybeSingle(),
-    sb.from("de_nghi").select("hoc_sinh_id, ly_do").eq("lop_id", l.id).eq("ngay", S.ngay).eq("buoi", S.buoi)
-      .eq("kieu", "bao_phep").eq("trang_thai", "ghi_nhan")
-  ]);
+  const t0 = performance.now();
+  const { data, error } = await goi("mo_lop", { p_lop: l.id, p_ngay: S.ngay, p_buoi: S.buoi });
   if (S.lopMo !== l) return;
-  const hong = kq.find(r => r.error);
-  if (hong) { $("phuDeLop").textContent = "Không tải được"; toast(hong.error.message); return; }
-  S.hs = kq[0].data || []; S.daChot = kq[2].data; S.tt = {};
-  if (S.daChot) (kq[1].data || []).forEach(v => { S.tt[v.hoc_sinh_id] = { t: v.loai, ld: v.ly_do || "" }; });
-  else (kq[3].data || []).forEach(p => { S.tt[p.hoc_sinh_id] = { t: "P", ld: p.ly_do, gvcn: true }; });
+  if (error) { $("phuDeLop").textContent = "Không tải được"; toast(error.message); return; }
+  ghiDo("lop", t0);
+  S.hs = data.hs || []; S.daChot = data.chot; S.tt = {};
+  if (S.daChot) (data.vang || []).forEach(v => { S.tt[v.hoc_sinh_id] = { t: v.loai, ld: v.ly_do || "" }; });
+  else (data.bao_phep || []).forEach(p => { S.tt[p.hoc_sinh_id] = { t: "P", ld: p.ly_do, gvcn: true }; });
 
   const ten = (S.dt.find(d => d.id === l.diem_truong_id) || {}).ten || "";
   $("phuDeLop").textContent = "Buổi " + tenBuoi(S.buoi).toLowerCase() + " · " + dmy(S.ngay) + " · " + ten + (S.daChot ? " · đã chốt" : "");
@@ -480,9 +504,11 @@ $("nutChot").onclick = async () => {
   const vang = S.hs.filter(h => S.tt[h.id]).map(h => ({ hs: h.id, loai: S.tt[h.id].t, ly_do: (S.tt[h.id].ld || "").trim() }));
   const d = demLop();
   const nut = $("nutChot"); nut.disabled = true; nut.textContent = "Đang lưu...";
-  const { data, error } = await sb.rpc("chot_lop", { p_lop: l.id, p_ngay: S.ngay, p_buoi: S.buoi, p_vang: vang });
+  const t0 = performance.now();
+  const { data, error } = await goi("chot_lop", { p_lop: l.id, p_ngay: S.ngay, p_buoi: S.buoi, p_vang: vang });
   nut.disabled = false; nut.textContent = S.daChot ? "Chốt lại" : "Chốt";
   if (error) { toast("Chưa chốt được: " + error.message); return; }
+  ghiDo("chot", t0);
   // Kiểm tra máy chủ đã ghi đúng như trên màn hình
   if (!data || data.si_so !== d.si || data.so_p !== d.p || data.so_kp !== d.kp) {
     $("hopLop").replaceChildren(el("div", { class: "hop",
@@ -512,14 +538,19 @@ $("nutLuuMk").onclick = async () => {
   $("mk1").value = ""; $("mk2").value = "";
   $("khungMk").classList.add("an"); toast("Đã đổi mật khẩu");
 };
-$("nutThoat").onclick = async () => { await sb.auth.signOut(); S.gv = null; S.tok++; man("mDangNhap"); };
+$("nutThoat").onclick = async () => {
+  try { localStorage.removeItem("dd_kd_" + S.uid); } catch (e) {}
+  await sb.auth.signOut(); S.gv = null; S.uid = null; S.tok++; man("mDangNhap");
+};
 
+/* ---------- Khởi động: không bao giờ để trang trắng ---------- */
 function baoLoi(t) { man("mDangNhap"); $("loiDn").textContent = t; }
-window.addEventListener("error", e => baoLoi("Lỗi: " + e.message));
-window.addEventListener("unhandledrejection", e => baoLoi("Lỗi: " + ((e.reason && e.reason.message) || e.reason)));
+function loiChay(t) { if (S.gv) toast(t); else baoLoi(t); }
+window.addEventListener("error", e => loiChay("Lỗi: " + e.message));
+window.addEventListener("unhandledrejection", e => loiChay("Lỗi: " + ((e.reason && e.reason.message) || e.reason)));
 (async () => {
   man("mDangNhap"); $("loiDn").textContent = "Đang kiểm tra phiên đăng nhập...";
-  const hetGio = new Promise((_, r) => setTimeout(() => r(new Error("máy chủ không phản hồi sau 10 giây")), 10000));
+  const hetGio = new Promise((_, r) => setTimeout(() => r(new Error("máy chủ không phản hồi sau 15 giây")), 15000));
   try { await Promise.race([vaoApp(), hetGio]); }
   catch (e) { baoLoi("Chưa vào được: " + e.message + ". Thầy/cô đăng nhập lại."); return; }
   if ($("loiDn").textContent === "Đang kiểm tra phiên đăng nhập...") $("loiDn").textContent = "";
